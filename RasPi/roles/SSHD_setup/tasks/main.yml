@@ -1,13 +1,26 @@
 - block:
-    - name: Get user home
-      shell: "sudo -i -u {{ username }} echo \\$HOME"
+    # Rather hacky way to get a user's home directory, AFAIK there's no cleaner methods to doing so
+    - name: Get {{ username }}'s home
+      ansible.builtin.debug:
+        msg: "{{ lookup('ansible.builtin.env', 'HOME') }}"
+      become: true
+      become_user: "{{ username }}"
       register: username_home
 
-    - name: Check if there's authorized_keys
+    - name: Check keys
       stat:
-        path: "{{ username_home }}/.ssh/authorized_keys"
+        path: "{{ ssh_key_item }}"
+      loop:
+        - "{{ username_home.msg }}/.ssh/authorized_keys"
+        - "{{ ansible_env.HOME }}/.ssh/authorized_keys"
+        - "{{ username_home.msg }}/.ssh/id_rsa"
+      loop_control:
+        loop_var: ssh_key_item
       register: authorized_keys
-      changed_when: (not authorized_keys.stat.exists) or (authorized_keys.stat.size == 0)
+      changed_when: (not authorized_keys.stat.exists)
+
+    - debug:
+        var: authorized_keys
 
     - name: Install cryptography
       pip:
@@ -16,59 +29,79 @@
 
     - name: Create the SSH directory
       file:
-        path: "{{ username_home }}/.ssh"
+        path: "{{ username_home.msg }}/.ssh"
         state: directory
         owner: "{{ username }}"
         group: "{{ username }}"
         mode: 0700
 
     - name: Generate new host + user keys, copy login user keys to target
-      when: (not authorized_keys.stat.exists or authorized_keys.stat.size == 0)
       block:
-        - name: Generate /etc/ssh/ RSA host key
-          command: ssh-keygen -q -t rsa -f /etc/ssh/ssh_host_rsa_key -C "" -N ""
-          args:
-            creates: /etc/ssh/ssh_host_rsa_key
+        - name: Generate /etc/ssh/ host keys
+          when: new_ssh_host_keys
+          shell: |
+            yes | ssh-keygen -q -t rsa -f /etc/ssh/ssh_host_rsa_key -N ""
+            yes | ssh-keygen -q -t dsa -f /etc/ssh/ssh_host_dsa_key  -N ""
+            yes | ssh-keygen -q -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N ""
+            yes | ssh-keygen -q -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ""
+          register: host_key
 
-        - name: Generate /etc/ssh/ RSA user key
-          command: ssh-keygen -q -t rsa -f "{{ username_home }}/.ssh/" -C "" -N ""
-          args:
-            creates: "{{ username_home }}/.ssh/"
+        - name: Generate /etc/ssh/ RSA user keys
+          when: new_ssh_user_keys or (not authorized_keys.results.2.stat.exists)
+          shell: yes | ssh-keygen -q -t rsa -f "{{ username_home.msg }}/.ssh/id_rsa" -N ""
 
-        - name: Copy the existing public key to a new user ({{ username }})
+        - debug:
+            msg: "{{ authorized_keys.results.0.stat.exists }} and {{ authorized_keys.results.1.stat.exists }}"
+
+        - name: Copy existing authorized_keys ({{ username }})
+          when: (not authorized_keys.results.0.stat.exists) and authorized_keys.results.1.stat.exists
           copy:
             src: "{{ ansible_env.HOME }}/.ssh/authorized_keys"
-            dest: "{{ username_home }}/.ssh/authorized_keys"
+            dest: "{{ username_home.msg }}/.ssh/authorized_keys"
+            remote_src: true
             owner: "{{ username }}"
             group: "{{ username }}"
             mode: 0600
             args:
-              creates: "{{ username_home }}/.ssh/authorized_keys"
+              creates: "{{ username_home.msg }}/.ssh/authorized_keys"
 
-    - name: Update SSH configuration
-      register: ssh_config
-      lineinfile:
-        dest: "/etc/ssh/sshd_config"
-        regexp: "{{ item.regexp }}"
-        line: "{{ item.line }}"
-        state: present
-        validate: "sshd -T -f %s"
-        mode: 0644
-      with_items:
-        - regexp: "^#?PasswordAuthentication"
-          line: "PasswordAuthentication {{ PasswordAuthentication }}"
-        - regexp: "^#?PermitRootLogin"
-          line: "PermitRootLogin {{ PermitRootLogin }}"
-        - regexp: "^#?Port"
-          line: "Port {{ ssh_port }}"
-        - regexp: "^#?ClientAliveInterval"
-          line: "ClientAliveInterval {{ ClientAliveInterval }}"
-        - regexp: "^#?ClientAliveCountMax"
-          line: "ClientAliveCountMax {{ ClientAliveCountMax }}"
+    - block:
+        - name: Get sshd_config hash
+          stat: path="/etc/ssh/sshd_config"
+          register: sshd_stat_before
+
+        - name: Update SSH configuration
+          register: ssh_config
+          lineinfile:
+            dest: "/etc/ssh/sshd_config"
+            regexp: "{{ item.regexp }}"
+            line: "{{ item.line }}"
+            state: present
+            validate: "sshd -T -f %s"
+            mode: 0644
+          with_items:
+            - regexp: "^#?PasswordAuthentication"
+              line: "PasswordAuthentication {{ PasswordAuthentication }}"
+            - regexp: "^#?PermitRootLogin"
+              line: "PermitRootLogin {{ PermitRootLogin }}"
+            - regexp: "^#?Port"
+              line: "Port {{ ssh_port }}"
+            - regexp: "^#?ClientAliveInterval"
+              line: "ClientAliveInterval {{ ClientAliveInterval }}"
+            - regexp: "^#?ClientAliveCountMax"
+              line: "ClientAliveCountMax {{ ClientAliveCountMax }}"
+
+        - name: Get sshd_config hash
+          stat:
+            path: "/etc/ssh/sshd_config"
+          register: sshd_stat_after
+
+        - debug:
+            msg: "{{ sshd_stat_before.stat.checksum }} {{ sshd_stat_after.stat.checksum }}"
 
     - name: Restart sshd
       service:
         name: sshd
         state: restarted
-      when: ssh_public_key is defined
+      when: host_key.changed or (sshd_stat_before.stat.checksum != sshd_stat_after.stat.checksum)
   become: true

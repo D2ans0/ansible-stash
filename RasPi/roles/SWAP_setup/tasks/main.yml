@@ -1,10 +1,23 @@
 ---
 # tasks file for SWAP_setup
+- name: Get swap size
+  shell: du -sh --apparent-size "{{ swap_file_path }}" | cut -d 'G' -f 1
+  register: system_swap_size
+  ignore_errors: true
+
+- debug:
+    msg: "The host has {{ system_swap_size.stdout }}GB dedicated to swap"
+  when: system_swap_size is defined
+
 - block:
+    - name: Turn off all swap and remove {{ swap_file_path }}
+      shell: swapoff -a; rm -f {{ swap_file_path }}
+      tags:
+        - swap.file.disable
+
     - name: Create swap file
-      command:
+      command: |
         dd if=/dev/zero of={{ swap_file_path }} bs=1024 count={{ swap_file_size_mb }}k
-        creates="{{ swap_file_path }}"
       tags:
         - swap.file.create
 
@@ -16,15 +29,8 @@
       tags:
         - swap.file.permissions
 
-    - name: "Check swap file type"
-      command: file {{ swap_file_path }}
-      register: swapfile
-      tags:
-        - swap.file.mkswap
-
     - name: Make swap file
       command: "mkswap {{ swap_file_path }}"
-      when: swapfile.stdout.find('swap file') == -1
       tags:
         - swap.file.mkswap
 
@@ -44,4 +50,6 @@
       when: ansible_swaptotal_mb < 1
       tags:
         - swap.file.swapon
-  become: yes
+
+  when: (( system_swap_size.stdout | float ) != ( swap_file_size_mb | float )/1024) or (system_swap_size is not defined)
+  become: true

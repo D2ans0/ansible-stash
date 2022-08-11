@@ -1,18 +1,19 @@
 ---
 # tasks file for Nala_setup
+- block:
+    - name: Add PGP key for Volian repo
+      get_url:
+        url: https://deb.volian.org/volian/scar.key
+        dest: /etc/apt/trusted.gpg.d/volian-archive-scar-unstable.gpg
 
-- name: Add Volian repo (contains Nala)
-  apt_repository:
-    repo: "deb https://deb.volian.org/volian/ scar main"
-    filename: "volian-archive-scar-unstable.list"
-    state: present
+    - name: Add Volian repo (contains Nala)
+      apt_repository:
+        repo: "deb https://deb.volian.org/volian/ scar main"
+        filename: "volian-archive-scar-unstable.list"
+        state: present
 
-- name: Add PGP key for Volian repo
-  get_url:
-    url: https://deb.volian.org/volian/scar.key
-    dest: /etc/apt/trusted.gpg.d/volian-archive-scar-unstable.gpg
-
-- name: Install nala-legacy (for stable Debian releases)
-  package:
-    name: nala-legacy
-    update_cache: yes
+    - name: Install nala-legacy (for stable Debian releases)
+      apt:
+        name: nala-legacy
+        update_cache: yes
+  become: true

@@ -1,4 +1,4 @@
 ---
 # defaults file for SWAP_setup
 swap_file_path: "/swap"
-swap_file_size_mb: "1024"
+swap_file_size_mb: 2048
