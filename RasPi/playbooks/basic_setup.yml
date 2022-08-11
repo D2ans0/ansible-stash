@@ -1,0 +1,18 @@
+---
+- hosts: raspi
+
+  tasks:
+    - name: Setup Nala
+      include_role:
+        name: "Nala_setup"
+
+    - name: Install {{ packages_to_install }}
+      package:
+        name: "{{ packages_to_install }}"
+        state: present
+
+    - name: Setup Swap space
+      include_role: "SWAP_setup"
+
+    - name: Set OpenSSH-Server config
+      include_role: "SSHD_setup"

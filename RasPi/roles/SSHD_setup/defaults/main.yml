@@ -1,0 +1,6 @@
+username: root
+ssh_port: 22
+PermitRootLogin: "prohibit-password"
+PasswordAuthentication: yes
+ClientAliveInterval: 30
+ClientAliveCountMax: 240

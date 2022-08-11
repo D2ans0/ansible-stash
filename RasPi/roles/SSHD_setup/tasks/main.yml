@@ -1,0 +1,74 @@
+- block:
+    - name: Get user home
+      shell: "sudo -i -u {{ username }} echo \\$HOME"
+      register: username_home
+
+    - name: Check if there's authorized_keys
+      stat:
+        path: "{{ username_home }}/.ssh/authorized_keys"
+      register: authorized_keys
+      changed_when: (not authorized_keys.stat.exists) or (authorized_keys.stat.size == 0)
+
+    - name: Install cryptography
+      pip:
+        name: cryptography
+        state: latest
+
+    - name: Create the SSH directory
+      file:
+        path: "{{ username_home }}/.ssh"
+        state: directory
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: 0700
+
+    - name: Generate new host + user keys, copy login user keys to target
+      when: (not authorized_keys.stat.exists or authorized_keys.stat.size == 0)
+      block:
+        - name: Generate /etc/ssh/ RSA host key
+          command: ssh-keygen -q -t rsa -f /etc/ssh/ssh_host_rsa_key -C "" -N ""
+          args:
+            creates: /etc/ssh/ssh_host_rsa_key
+
+        - name: Generate /etc/ssh/ RSA user key
+          command: ssh-keygen -q -t rsa -f "{{ username_home }}/.ssh/" -C "" -N ""
+          args:
+            creates: "{{ username_home }}/.ssh/"
+
+        - name: Copy the existing public key to a new user ({{ username }})
+          copy:
+            src: "{{ ansible_env.HOME }}/.ssh/authorized_keys"
+            dest: "{{ username_home }}/.ssh/authorized_keys"
+            owner: "{{ username }}"
+            group: "{{ username }}"
+            mode: 0600
+            args:
+              creates: "{{ username_home }}/.ssh/authorized_keys"
+
+    - name: Update SSH configuration
+      register: ssh_config
+      lineinfile:
+        dest: "/etc/ssh/sshd_config"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+        validate: "sshd -T -f %s"
+        mode: 0644
+      with_items:
+        - regexp: "^#?PasswordAuthentication"
+          line: "PasswordAuthentication {{ PasswordAuthentication }}"
+        - regexp: "^#?PermitRootLogin"
+          line: "PermitRootLogin {{ PermitRootLogin }}"
+        - regexp: "^#?Port"
+          line: "Port {{ ssh_port }}"
+        - regexp: "^#?ClientAliveInterval"
+          line: "ClientAliveInterval {{ ClientAliveInterval }}"
+        - regexp: "^#?ClientAliveCountMax"
+          line: "ClientAliveCountMax {{ ClientAliveCountMax }}"
+
+    - name: Restart sshd
+      service:
+        name: sshd
+        state: restarted
+      when: ssh_public_key is defined
+  become: true
