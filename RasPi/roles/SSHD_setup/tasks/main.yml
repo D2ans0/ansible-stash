@@ -19,9 +19,6 @@
       register: authorized_keys
       changed_when: (not authorized_keys.stat.exists)
 
-    - debug:
-        var: authorized_keys
-
     - name: Install cryptography
       pip:
         name: cryptography
@@ -49,9 +46,6 @@
         - name: Generate /etc/ssh/ RSA user keys
           when: new_ssh_user_keys or (not authorized_keys.results.2.stat.exists)
           shell: yes | ssh-keygen -q -t rsa -f "{{ username_home.msg }}/.ssh/id_rsa" -N ""
-
-        - debug:
-            msg: "{{ authorized_keys.results.0.stat.exists }} and {{ authorized_keys.results.1.stat.exists }}"
 
         - name: Copy existing authorized_keys ({{ username }})
           when: (not authorized_keys.results.0.stat.exists) and authorized_keys.results.1.stat.exists
@@ -95,9 +89,6 @@
           stat:
             path: "/etc/ssh/sshd_config"
           register: sshd_stat_after
-
-        - debug:
-            msg: "{{ sshd_stat_before.stat.checksum }} {{ sshd_stat_after.stat.checksum }}"
 
     - name: Restart sshd
       service:
