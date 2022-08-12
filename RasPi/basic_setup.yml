@@ -27,9 +27,15 @@
         - "SWAP_setup"
         - "SSHD_setup"
 
+    - name: Change default shell and copy config
+      include_role:
+        name: "default_shell_setup"
+
     - name: Check if a reboot is needed
       register: reboot_required_file
-      stat: path=/var/run/reboot-required get_md5=no
+      stat:
+        path: "/var/run/reboot-required"
+        get_md5: no
 
     - name: Reboot the box if kernel updated
       reboot:

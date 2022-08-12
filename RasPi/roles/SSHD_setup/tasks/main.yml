@@ -1,19 +1,18 @@
 - block:
     # Rather hacky way to get a user's home directory, AFAIK there's no cleaner methods to doing so
-    - name: Get {{ username }}'s home
-      ansible.builtin.debug:
-        msg: "{{ lookup('ansible.builtin.env', 'HOME') }}"
+    - name: Get {{ target_username }}'s home
+      shell: "echo $HOME"
       become: true
-      become_user: "{{ username }}"
+      become_user: "{{ target_username }}"
       register: username_home
 
     - name: Check keys
       stat:
         path: "{{ ssh_key_item }}"
       loop:
-        - "{{ username_home.msg }}/.ssh/authorized_keys"
+        - "{{ username_home }}/.ssh/authorized_keys"
         - "{{ ansible_env.HOME }}/.ssh/authorized_keys"
-        - "{{ username_home.msg }}/.ssh/id_rsa"
+        - "{{ username_home }}/.ssh/id_rsa"
       loop_control:
         loop_var: ssh_key_item
       register: authorized_keys
@@ -26,10 +25,10 @@
 
     - name: Create the SSH directory
       file:
-        path: "{{ username_home.msg }}/.ssh"
+        path: "{{ username_home.stdout }}/.ssh"
         state: directory
-        owner: "{{ username }}"
-        group: "{{ username }}"
+        owner: "{{ target_username }}"
+        group: "{{ target_username }}"
         mode: 0700
 
     - name: Generate new host + user keys, copy login user keys to target
@@ -44,36 +43,40 @@
           register: host_key
 
         - name: Generate /etc/ssh/ RSA user keys
-          when: new_ssh_user_keys or (not authorized_keys.results.2.stat.exists)
-          shell: yes | ssh-keygen -q -t rsa -f "{{ username_home.msg }}/.ssh/id_rsa" -N ""
+          when: >
+            new_ssh_user_keys or
+            (not authorized_keys.results.2.stat.exists)
+          shell: yes | ssh-keygen -q -t rsa -f "{{ username_home.stdout }}/.ssh/id_rsa" -N ""
 
-        - name: Copy existing authorized_keys ({{ username }})
+        - name: Copy existing authorized_keys ({{ target_username }})
           when: (not authorized_keys.results.0.stat.exists) and authorized_keys.results.1.stat.exists
           copy:
             src: "{{ ansible_env.HOME }}/.ssh/authorized_keys"
-            dest: "{{ username_home.msg }}/.ssh/authorized_keys"
+            dest: "{{ username_home.stdout }}/.ssh/authorized_keys"
             remote_src: true
-            owner: "{{ username }}"
-            group: "{{ username }}"
+            owner: "{{ target_username }}"
+            group: "{{ target_username }}"
             mode: 0600
             args:
-              creates: "{{ username_home.msg }}/.ssh/authorized_keys"
+              creates: "{{ username_home.stdout }}/.ssh/authorized_keys"
 
     - block:
-        - name: Get sshd_config hash
-          stat: path="/etc/ssh/sshd_config"
-          register: sshd_stat_before
+        # - name: Get sshd_config hash
+        #   stat: path="/etc/ssh/sshd_config"
+        #   register: sshd_stat_before
 
         - name: Update SSH configuration
           register: ssh_config
           lineinfile:
             dest: "/etc/ssh/sshd_config"
-            regexp: "{{ item.regexp }}"
-            line: "{{ item.line }}"
+            regexp: "{{ sshd_conf_line.regexp }}"
+            line: "{{ sshd_conf_line.line }}"
             state: present
             validate: "sshd -T -f %s"
             mode: 0644
-          with_items:
+          loop_control:
+            loop_var: sshd_conf_line
+          loop:
             - regexp: "^#?PasswordAuthentication"
               line: "PasswordAuthentication {{ PasswordAuthentication }}"
             - regexp: "^#?PermitRootLogin"
@@ -85,14 +88,16 @@
             - regexp: "^#?ClientAliveCountMax"
               line: "ClientAliveCountMax {{ ClientAliveCountMax }}"
 
-        - name: Get sshd_config hash
-          stat:
-            path: "/etc/ssh/sshd_config"
-          register: sshd_stat_after
+        # - name: Get sshd_config hash
+        #   stat:
+        #     path: "/etc/ssh/sshd_config"
+        #   register: sshd_stat_after
 
     - name: Restart sshd
       service:
         name: sshd
         state: restarted
-      when: host_key.changed or (sshd_stat_before.stat.checksum != sshd_stat_after.stat.checksum)
+      when: >
+        host_key.changed or
+        ssh_config.changed
   become: true

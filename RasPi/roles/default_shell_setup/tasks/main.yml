@@ -1,0 +1,89 @@
+- name: Gather package facts
+  package_facts:
+    manager: auto
+
+- name: set default shell as {{ new_default_shell }}
+  shell: chsh --shell {{ new_default_shell }} {{ target_username }}
+  when: >
+    (ansible_facts.packages[new_default_shell | basename] is defined) and
+    (lookup('ansible.builtin.env', 'SHELL') != new_default_shell)
+  become: true
+
+# Rather hacky way to get a user's home directory, AFAIK there's no cleaner methods to doing so
+- name: Get {{ target_username }}'s home
+  shell: "echo $HOME"
+  become: true
+  become_user: "{{ target_username }}"
+  register: username_home
+
+- block:
+    - debug:
+        var: username_home.stdout
+
+    - name: Download OhMyZsh
+      get_url:
+        url: "https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
+        dest: "{{ OhMyZsh.path }}.sh"
+        mode: 0744
+        owner: root
+        group: root
+        force: false
+
+    - name: Check if OhMyZsh is installed in {{ OhMyZsh.path }}
+      stat:
+        path: "{{ OhMyZsh.path }}"
+      register: OhMyZsh_status
+
+    - name: Install OhMyZsh
+      when: not OhMyZsh_status.stat.exists
+      shell: "yes | sh -c {{ OhMyZsh.path }}.sh"
+      environment:
+        ZSH: "{{ OhMyZsh.path }}"
+        CHSH: "yes"
+        RUNZSH: "no"
+        KEEP_ZSHRC: "{{ OhMyZsh.keep_zshrc }}"
+
+    - name: Copy config
+      when: OhMyZsh.copy_config and (not OhMyZsh.install_powerlevel10k)
+      template:
+        src: "zshrc.j2"
+        dest: "{{ username_home.stdout }}/.zshrc"
+        owner: "{{ target_username }}"
+        group: "{{ target_username }}"
+        mode: 0600
+
+    - name: Install Powerlevel10k
+      block:
+        - name: Get Powerlevel 10k
+          git:
+            repo: "https://github.com/romkatv/powerlevel10k.git"
+            dest: "{{ OhMyZsh.path }}/themes/powerlevel10k"
+            force: no
+
+        - name: Copy zshrc with p10k config
+          when: OhMyZsh.copy_config
+          template:
+            src: ".zshrc_p10k.j2"
+            dest: "{{ username_home.stdout }}/.zshrc"
+            owner: "{{ target_username }}"
+            group: "{{ target_username }}"
+            mode: 0600
+
+        - name: Copy Powerlevel10k config
+          copy:
+            src: ".p10k.zsh"
+            dest: "{{ username_home.stdout }}/.p10k.zsh"
+            owner: "{{ target_username }}"
+            group: "{{ target_username }}"
+            mode: 0600
+            force: no
+
+      when: OhMyZsh.install_powerlevel10k
+  become: true
+  when: >
+    OhMyZsh.install and
+    (ansible_facts.packages['git'] is defined)
+
+- debug:
+    msg: "Git is needed to download OhMyZsh, please install."
+  when: OhMyZsh.install and (ansible_facts.packages['git'] is not defined)

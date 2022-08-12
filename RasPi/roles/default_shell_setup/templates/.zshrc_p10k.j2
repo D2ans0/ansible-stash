@@ -1,0 +1,51 @@
+##### KEYBINDS #####
+bindkey -e                                        # emacs key bindings
+bindkey ' ' magic-space                           # do history expansion on space
+bindkey '^[[3;5~' kill-word                       # ctrl + Supr
+bindkey '^[[3~' delete-char                       # delete
+bindkey '^[[1;5C' forward-word                    # ctrl + ->
+bindkey '^[[1;5D' backward-word                   # ctrl + <-
+bindkey '^[[5~' beginning-of-buffer-or-history    # page up
+bindkey '^[[6~' end-of-buffer-or-history          # page down
+bindkey '^[[H' beginning-of-line                  # home
+bindkey '^[[F' end-of-line                        # end
+bindkey '^[[Z' undo                               # shift + tab undo last action
+
+######   POWERLEVEL 10K CONFIGURATION   #######
+
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
+
+##########   OH-MY-ZSH CONFIGURATION ##########
+# Path to your oh-my-zsh installation.
+export ZSH="{{ OhMyZsh.path }}"
+
+ZSH_THEME="powerlevel10k/powerlevel10k"
+COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
+plugins=(git)
+source $ZSH/oh-my-zsh.sh
+
+# Uncomment the following line if pasting URLs and other text is messed up.
+# DISABLE_MAGIC_FUNCTIONS="true"
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+#################   ALIASES   #################
+export LS_OPTIONS="--color=auto -h"
+alias ll='ls -l '$LS_OPTIONS''
+alias la='ls -A '$LS_OPTIONS''
+alias l='ls -CF '$LS_OPTIONS''
+alias ConLog='cat /proc/net/nf_conntrack'
+alias LsofPorts='lsof -i -P -n'
+alias motd='run-parts /etc/update-motd.d/'
+alias cls=clear
+alias py=python3
+alias pip=pip3
+alias 1e='openssl enc -aes-256-cbc -pbkdf2 -iter 10000 -in'
+alias 1d='openssl enc -aes-256-cbc -pbkdf2 -d -in'

@@ -6,7 +6,7 @@
   ignore_errors: true
 
 - debug:
-    msg: "The host has {{ system_swap_size.stdout }}GB dedicated to swap"
+    msg: "The host has {{ system_swap_size.stdout }}GiB dedicated to swap"
   when: system_swap_size is defined
 
 - block:
@@ -34,22 +34,12 @@
       tags:
         - swap.file.mkswap
 
-    - name: Write swap entry in fstab
-      mount: name=none
-        src={{ swap_file_path }}
-        fstype=swap
-        opts=sw
-        passno=0
-        dump=0
-        state=present
-      tags:
-        - swap.fstab
-
     - name: Mount swap
       command: "swapon {{ swap_file_path }}"
-      when: ansible_swaptotal_mb < 1
       tags:
         - swap.file.swapon
 
-  when: (( system_swap_size.stdout | float ) != ( swap_file_size_mb | float )/1024) or (system_swap_size is not defined)
+  when: >
+    (( system_swap_size.stdout | float ) != ( swap_file_size_mb | float )/1024) or
+    (system_swap_size is not defined)
   become: true
