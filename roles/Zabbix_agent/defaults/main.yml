@@ -1,0 +1,97 @@
+---
+# NOTE, NOT all possible keys are present,
+# please refer to the Zabbix documentation and
+# add new keys in extra at the bottom.
+
+ZabbixConf_Replace: false
+
+ZabbixConf_General_PidFile: "/run/zabbix/zabbix_agentd.pid"
+# system - syslog, file - to target in LogFile, console - STDout
+ZabbixConf_General_LogType: "file"
+# Used when LogType = file
+ZabbixConf_General_LogFile: "/var/log/zabbix/zabbix_agentd.log"
+# max log size before rotation (0 is auto)
+ZabbixConf_General_LogFileSize: "0"
+# debug level: 0 - start/stop info, 1 - critical, 2 - errors, 3 - warnings, 4 - debug, 5 - extra debug
+ZabbixConf_General_DebugLevel: "3"
+# IP for outgoing connections, empty for auto
+ZabbixConf_General_SourceIP: ""
+# Allow/Deny execution of items matching a pattern, empty for all
+# system.run[*] allows to run any remote command
+ZabbixConf_General_AllowKey: ""
+ZabbixConf_General_DenyKey: ""
+# logging of shell commands as warnings
+ZabbixConf_General_LogRemoteCommands: 0
+
+
+# only accept connections from specified servers
+ZabbixConf_Passive_Server: 0.0.0.0/0
+ZabbixConf_Passive_ListenPort: 10050
+ZabbixConf_Passive_ListenIP: ""
+# 0-100, amount of zabbix_agent instances to start (0 disables passive checks)
+ZabbixConf_Passive_StartAgents: 3
+
+
+# IP addresses of Zabbix servers to connect to for active checks
+ZabbixConf_Active_ServerActive: ""
+# Item to get a hostname from dynamically
+ZabbixConf_Active_HostnameItem: system.hostname
+# Used in auto-registration, HostMetadata is static to all hosts, HostMetadataItem is dynamic
+ZabbixConf_Active_HostMetadata: ""
+ZabbixConf_Active_HostMetadataItem: "release"
+# Used in auto-registration, Item used for getting the host interface.
+ZabbixConf_Active_HostInterfaceItem: ""
+# 60-3600 in seconds. How often to refresh the list of active checks
+ZabbixConf_Active_RefreshActiveChecks: "120"
+# 1-3600 in seconds. Do not keep data longer than N seconds in buffer.
+ZabbixConf_Active_BufferSend: "5"
+# 2-65535. Max number of values in a memory buffer before which to send
+ZabbixConf_Active_BufferSize: "100"
+# 1-1000. Max number of lines per second to send to the server (overwritten by maxlines)
+ZabbixConf_Active_MaxLinesPerSecond: "20"
+# 0-3600 in seconds. 0 - disable heartbeat messages
+ZabbixConf_Active_HeartbeatFrequency: "60"
+
+
+# 1-30 in seconds. Max time to spend processing
+ZabbixConf_Advanced_Timeout: "3"
+# 0-1. Allow the agent to run as root
+ZabbixConf_Advanced_AllowRoot: "0"
+# Drop privileges to this user, this key is overriden in the systemd service file. (only works if AllowRoot=0)
+ZabbixConf_Advanced_User: "zabbix"
+# Include additional configuration files
+ZabbixConf_Advanced_Include: "/etc/zabbix/zabbix_agentd.d/*.conf"
+
+
+# 0-1. Allow all characters to be passed to user-defined parameters
+# @ and newline (\n) are not allowed
+ZabbixConf_UserParams_UnsafeUserParameters: "0"
+# Directory to execute UserParameters from (1 entry allowed)
+ZabbixConf_UserParams_UserParameterDir: ""
+# Define additional parameters
+ZabbixConf_UserParams_UserParameter: |
+      UserParameter=release,uname -a
+
+# Path to agent modules
+ZabbixConf_Modules_LoadModulePath: "${libdir}/modules"
+
+# unencrypted, psk, cert (1 value). How to connect to server/proxy, used for active checks
+ZabbixConf_Encryption_TLSConnect: "unencrypted"
+# unencrypted, psk, cert (comma separated). Connection types to accept
+ZabbixConf_Encryption_TLSAccept: "unencrypted"
+# Path to top-level CA(s) certificates
+ZabbixConf_Encryption_TLSCAFile: ""
+# Path to revoked certificates
+ZabbixConf_Encryption_TLSCRLFile: ""
+# Allowed server certificate issuer
+ZabbixConf_Encryption_TLSServerCertIssuer: ""
+# Allowed server certificate subject.
+ZabbixConf_Encryption_TLSServerCertSubject: ""
+# Path to file with agent certificate or certificate chain
+ZabbixConf_Encryption_TLSCertFile: ""
+# Path to file with agent private key
+ZabbixConf_Encryption_TLSKeyFile: ""
+# Unique, case sensitive string used to identify the pre-shared key
+ZabbixConf_Encryption_TLSPSKIdentity: ""
+# Path to pre-shared key
+ZabbixConf_Encryption_TLSPSKFile: ""

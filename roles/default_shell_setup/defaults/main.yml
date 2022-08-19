@@ -1,0 +1,13 @@
+target_username: "root"
+new_default_shell: "/bin/zsh"
+OhMyZsh_install: true
+
+  # installing p10k with this role requires OhMyZsh_install to be true
+OhMyZsh_install_powerlevel10k: true
+
+OhMyZsh_path: "/opt/ohmyzsh"
+  # keep_zshrc needs to be either "yes" or "no"
+OhMyZsh_keep_zshrc: "no"
+
+  # if install_powerlevel10k is true, it will copy a p10k config
+OhMyZsh_copy_config: true

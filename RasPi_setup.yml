@@ -20,16 +20,13 @@
         force_apt_get: yes
       become: true
 
-    - name: Setup Swap space and OpenSSH-Server
+    - name: Setup Swap space, OpenSSH-Server and default shell
       include_role:
         name: "{{ item }}"
       with_items:
         - "SWAP_setup"
         - "SSHD_setup"
-
-    - name: Change default shell and copy config
-      include_role:
-        name: "default_shell_setup"
+        - "default_shell_setup"
 
     - name: Check if a reboot is needed
       register: reboot_required_file

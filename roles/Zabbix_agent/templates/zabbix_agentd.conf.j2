@@ -1,0 +1,69 @@
+############ GENERAL PARAMETERS #################
+
+PidFile={{ ZabbixConf_General_PidFile }}
+LogType={{ ZabbixConf_General_LogType }}
+LogFile={{ ZabbixConf_General_LogFile }}
+LogFileSize={{ ZabbixConf_General_LogFileSize }}
+DebugLevel={{ ZabbixConf_General_DebugLevel }}
+
+# may cause errors, check if works on empty
+SourceIP={{ ZabbixConf_General_SourceIP }}
+AllowKey={{ ZabbixConf_General_AllowKey }}
+DenyKey={{ ZabbixConf_General_DenyKey }}
+LogRemoteCommands={{ ZabbixConf_General_LogRemoteCommands }}
+
+
+##### Passive checks related
+
+Server={{ ZabbixConf_Passive_Server }}
+ListenPort={{ ZabbixConf_Passive_ListenPort }}
+ListenIP={{ ZabbixConf_Passive_ListenIP }}
+StartAgents={{ ZabbixConf_Passive_StartAgents }}
+
+
+##### Active checks related
+
+ServerActive={{ ZabbixConf_Active_ServerActive }}
+HostnameItem={{ ZabbixConf_Active_HostnameItem }}
+HostMetadata={{ ZabbixConf_Active_HostMetadata }}
+HostMetadataItem={{ ZabbixConf_Active_HostMetadataItem }}
+HostInterfaceItem={{ ZabbixConf_Active_HostInterfaceItem }}
+RefreshActiveChecks={{ ZabbixConf_Active_RefreshActiveChecks }}
+BufferSend={{ ZabbixConf_Active_BufferSend }}
+BufferSize={{ ZabbixConf_Active_BufferSize }}
+MaxLinesPerSecond={{ ZabbixConf_Active_MaxLinesPerSecond }}
+HeartbeatFrequency={{ ZabbixConf_Active_HeartbeatFrequency }}
+
+
+############ ADVANCED PARAMETERS #################
+
+Timeout={{ ZabbixConf_Advanced_Timeout }}
+AllowRoot={{ ZabbixConf_Advanced_AllowRoot }}
+User={{ ZabbixConf_Advanced_User }}
+Include={{ ZabbixConf_Advanced_Include }}
+
+
+####### USER-DEFINED MONITORED PARAMETERS #######
+
+UnsafeUserParameters={{ ZabbixConf_UserParams_UnsafeUserParameters }}
+UserParameterDir={{ ZabbixConf_UserParams_UserParameterDir }}
+{{ ZabbixConf_UserParams_UserParameter }}
+
+
+####### LOADABLE MODULES #######
+
+LoadModulePath={{ ZabbixConf_Modules_LoadModulePath }}
+
+
+####### TLS-RELATED PARAMETERS #######
+
+TLSConnect={{ ZabbixConf_Encryption_TLSConnect }}
+TLSAccept={{ ZabbixConf_Encryption_TLSAccept }}
+TLSCAFile={{ ZabbixConf_Encryption_TLSCAFile }}
+TLSCRLFile={{ ZabbixConf_Encryption_TLSCRLFile }}
+TLSServerCertIssuer={{ ZabbixConf_Encryption_TLSServerCertIssuer }}
+TLSServerCertSubject={{ ZabbixConf_Encryption_TLSServerCertSubject }}
+TLSCertFile={{ ZabbixConf_Encryption_TLSCertFile }}
+TLSKeyFile={{ ZabbixConf_Encryption_TLSKeyFile }}
+TLSPSKIdentity={{ ZabbixConf_Encryption_TLSPSKIdentity }}
+TLSPSKFile={{ ZabbixConf_Encryption_TLSPSKFile }}

@@ -1,0 +1,9 @@
+---
+- hosts: zabbix_agent
+
+  tasks:
+    - name:
+      include_role:
+        name: "Zabbix_agent"
+        apply:
+          become: true

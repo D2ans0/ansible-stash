@@ -57,8 +57,7 @@
             owner: "{{ target_username }}"
             group: "{{ target_username }}"
             mode: 0600
-            args:
-              creates: "{{ username_home.stdout }}/.ssh/authorized_keys"
+            force: false
 
     - block:
         # - name: Get sshd_config hash

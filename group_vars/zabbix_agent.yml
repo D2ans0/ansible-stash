@@ -1,0 +1,7 @@
+ansible_user: "root"
+ansible_password: "tmp"
+
+# Zabbix Conf variables, see available ones in roles/Zabbix_agent/defaults/main.yml
+ZabbixConf_Replace: true
+ZabbixConf_Active_ServerActive: "someValue"
+

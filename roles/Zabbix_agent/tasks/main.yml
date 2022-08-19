@@ -1,0 +1,61 @@
+---
+- name: Setup Zabbix repository
+  block:
+    # RHEL x86_64 repo
+    - yum_repository:
+        name: "zabbix"
+        description: "Zabbix RHEL repo"
+        baseurl: "https://repo.zabbix.com/zabbix/6.2/rhel/{{ ansible_facts.distribution_version }}/x86_64"
+        gpgkey: "http://repo.zabbix.com/RPM-GPG-KEY-ZABBIX-A14FE591"
+        state: present
+      when: >
+        ((ansible_facts.pkg_mgr | lower) == "dnf") and
+        ansible_facts.architecture == "x86_64"
+
+    # Apt repo key
+    - apt_key:
+        url: "http://repo.zabbix.com/zabbix-official-repo.key"
+        state: present
+      when: ((ansible_facts.pkg_mgr | lower) == "apt")
+
+    # Debian x86_64 repo
+    - apt_repository:
+        repo: "deb https://repo.zabbix.com/zabbix/6.2/debian {{ ansible_facts.lsb.codename }} main"
+        state: present
+      when: >
+        ((ansible_facts.pkg_mgr | lower) == "apt") and
+        (ansible_facts.architecture == "x86_64")
+
+    # Raspbian ARMv8 repo
+    - apt_repository:
+        repo: "deb https://repo.zabbix.com/zabbix/6.2/raspbian {{ ansible_facts.lsb.codename }} main"
+        state: present
+      when: >
+        ((ansible_facts.pkg_mgr | lower) == "apt") and
+        (ansible_facts.architecture == "aarch64")
+
+    # Install
+    - ansible.builtin.package:
+        name: zabbix-agent
+        state: present
+
+- name: Configure Zabbix Agent
+  when: ZabbixConf_Replace
+  template:
+    src: "zabbix_agentd.conf.j2"
+    dest: "/etc/zabbix/zabbix_agentd.conf"
+    owner: "root"
+    group: "root"
+    mode: 0644
+
+- name: Comment out empty values
+  when: ZabbixConf_Replace
+  replace:
+    path: "/etc/zabbix/zabbix_agentd.conf"
+    regexp: "(^.*=$)"
+    replace: '# \1'
+
+- name: Restart zabbix-agent
+  ansible.builtin.service:
+    name: zabbix-agent
+    state: restarted
