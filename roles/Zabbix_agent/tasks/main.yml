@@ -24,6 +24,16 @@
         state: present
       when: >
         ((ansible_facts.pkg_mgr | lower) == "apt") and
+        not ((ansible_distribution | lower) == "ubuntu") and
+        (ansible_facts.architecture == "x86_64")
+
+    # Ubuntu x86_64 repo
+    - apt_repository:
+        repo: "deb https://repo.zabbix.com/zabbix/6.2/ubuntu {{ ansible_facts.lsb.codename }} main"
+        state: present
+      when: >
+        ((ansible_facts.pkg_mgr | lower) == "apt") and
+        ((ansible_distribution | lower) == "ubuntu") and
         (ansible_facts.architecture == "x86_64")
 
     # Raspbian ARMv8 repo
@@ -32,30 +42,67 @@
         state: present
       when: >
         ((ansible_facts.pkg_mgr | lower) == "apt") and
+        not ((ansible_distribution | lower) == "ubuntu") and
         (ansible_facts.architecture == "aarch64")
 
+
     # Install
-    - ansible.builtin.package:
-        name: zabbix-agent
-        state: present
+    - name: Installing and configuring Zabbix Agent {{ Zabbix_Agent_Version }}
+      block:
+      # Agent 1 setup
+      - block:
+        - ansible.builtin.package:
+            name: zabbix-agent
+            state: present
 
-- name: Configure Zabbix Agent
-  when: ZabbixConf_Replace
-  template:
-    src: "zabbix_agentd.conf.j2"
-    dest: "/etc/zabbix/zabbix_agentd.conf"
-    owner: "root"
-    group: "root"
-    mode: 0644
+        - name: Configure Zabbix Agent
+          when: ZabbixConf_Replace
+          template:
+            src: "zabbix_agentd.conf.j2"
+            dest: "/etc/zabbix/zabbix_agentd.conf"
+            owner: "root"
+            group: "root"
+            mode: 0644
 
-- name: Comment out empty values
-  when: ZabbixConf_Replace
-  replace:
-    path: "/etc/zabbix/zabbix_agentd.conf"
-    regexp: "(^.*=$)"
-    replace: '# \1'
+        - name: Comment out empty values
+          when: ZabbixConf_Replace
+          replace:
+            path: "/etc/zabbix/zabbix_agentd.conf"
+            regexp: "(^.*=$)"
+            replace: '# \1'
 
-- name: Restart zabbix-agent
-  ansible.builtin.service:
-    name: zabbix-agent
-    state: restarted
+        - name: Restart zabbix-agent
+          ansible.builtin.service:
+            name: zabbix-agent
+            state: restarted
+
+        when: Zabbix_Agent_Version == "1"
+
+      # Agent 2 setup
+      - block:
+        - ansible.builtin.package:
+            name: zabbix-agent2
+            state: present
+
+        - name: Configure Zabbix Agent
+          when: ZabbixConf_Replace
+          template:
+            src: "zabbix_agent2.conf.j2"
+            dest: "/etc/zabbix/zabbix_agent2.conf"
+            owner: "root"
+            group: "root"
+            mode: 0644
+
+        - name: Comment out empty values
+          when: ZabbixConf_Replace
+          replace:
+            path: "/etc/zabbix/zabbix_agent2.conf"
+            regexp: "(^.*=$)"
+            replace: '# \1'
+
+        - name: Restart zabbix-agent
+          ansible.builtin.service:
+            name: zabbix-agent2
+            state: restarted
+
+        when: Zabbix_Agent_Version == "2"

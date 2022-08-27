@@ -1,7 +1,19 @@
 ansible_user: "root"
 ansible_password: "tmp"
 
-# Zabbix Conf variables, see available ones in roles/Zabbix_agent/defaults/main.yml
+# Zabbix Conf variables, see all available ones in roles/Zabbix_agent/defaults/main.yml
+
+Zabbix_Reinstall: true
+Zabbix_Agent_Version: "2"
 ZabbixConf_Replace: true
-ZabbixConf_Active_ServerActive: "someValue"
+
+ZabbixConf_General_ForceActiveChecksOnStart: 1
+ZabbixConf_Passive_Server: "ip_addr/cidr"
+ZabbixConf_Active_ServerActive: "ip_addr"
+ZabbixConf_Active_EnablePersistentBuffer: 1
+ZabbixConf_Active_PersistentBufferPeriod: 12h
+ZabbixConf_Active_PersistentBufferFile: /tmp/zabbix_buffer.sqlite
+
+ZabbixConf_UserParams_UserParameter: |
+  UserParameter=release,uname -a
 

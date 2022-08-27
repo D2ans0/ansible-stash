@@ -3,13 +3,23 @@
 # please refer to the Zabbix documentation and
 # add new keys in extra at the bottom.
 
+## Whether to install and setup Zabbix agent legacy (1) or Zabbix agent 2 (2), the latter being a drop-in upgrade over the legacy one
+Zabbix_Agent_Version: "2"
+
 ZabbixConf_Replace: false
 
-ZabbixConf_General_PidFile: "/run/zabbix/zabbix_agentd.pid"
+### Agent 1 sometimes reffered as Agentd
+### Empty values the config parameters will lead for zabbix to set their defaults ###
+
+############ GENERAL PARAMETERS #################
+
+ZabbixConf_General_PidFile_agentd: "/run/zabbix/zabbix_agentd.pid"
+ZabbixConf_General_PidFile_agent2: "/run/zabbix/zabbix_agent2.pid"
 # system - syslog, file - to target in LogFile, console - STDout
 ZabbixConf_General_LogType: "file"
 # Used when LogType = file
-ZabbixConf_General_LogFile: "/var/log/zabbix/zabbix_agentd.log"
+ZabbixConf_General_LogFile_agentd: "/var/log/zabbix/zabbix_agentd.log"
+ZabbixConf_General_LogFile_agent2: "/var/log/zabbix/zabbix_agent2.log"
 # max log size before rotation (0 is auto)
 ZabbixConf_General_LogFileSize: "0"
 # debug level: 0 - start/stop info, 1 - critical, 2 - errors, 3 - warnings, 4 - debug, 5 - extra debug
@@ -23,14 +33,26 @@ ZabbixConf_General_DenyKey: ""
 # logging of shell commands as warnings
 ZabbixConf_General_LogRemoteCommands: 0
 
+## Agent 2 specific params
+ZabbixConf_General_ForceActiveChecksOnStart: 0
+
+
+##### Passive checks related
 
 # only accept connections from specified servers
 ZabbixConf_Passive_Server: 0.0.0.0/0
 ZabbixConf_Passive_ListenPort: 10050
 ZabbixConf_Passive_ListenIP: ""
+
+## Agent 1 specific params
 # 0-100, amount of zabbix_agent instances to start (0 disables passive checks)
 ZabbixConf_Passive_StartAgents: 3
 
+## Agent 2 specific params
+ZabbixConf_Passive_StatusPort: ""
+
+
+##### Active checks related
 
 # IP addresses of Zabbix servers to connect to for active checks
 ZabbixConf_Active_ServerActive: ""
@@ -39,8 +61,6 @@ ZabbixConf_Active_HostnameItem: system.hostname
 # Used in auto-registration, HostMetadata is static to all hosts, HostMetadataItem is dynamic
 ZabbixConf_Active_HostMetadata: ""
 ZabbixConf_Active_HostMetadataItem: "release"
-# Used in auto-registration, Item used for getting the host interface.
-ZabbixConf_Active_HostInterfaceItem: ""
 # 60-3600 in seconds. How often to refresh the list of active checks
 ZabbixConf_Active_RefreshActiveChecks: "120"
 # 1-3600 in seconds. Do not keep data longer than N seconds in buffer.
@@ -52,28 +72,49 @@ ZabbixConf_Active_MaxLinesPerSecond: "20"
 # 0-3600 in seconds. 0 - disable heartbeat messages
 ZabbixConf_Active_HeartbeatFrequency: "60"
 
+## Agent 1 specific params
+# Used in auto-registration, Item used for getting the host interface.
+ZabbixConf_Active_HostInterfaceItem: ""
+
+## Agent 2 specific params
+ZabbixConf_Active_EnablePersistentBuffer: "0"
+ZabbixConf_Active_PersistentBufferPeriod: "1h"
+ZabbixConf_Active_PersistentBufferFile: ""
+
+
+############ ADVANCED PARAMETERS #################
 
 # 1-30 in seconds. Max time to spend processing
 ZabbixConf_Advanced_Timeout: "3"
+
+## Agent 1 specific params
 # 0-1. Allow the agent to run as root
 ZabbixConf_Advanced_AllowRoot: "0"
 # Drop privileges to this user, this key is overriden in the systemd service file. (only works if AllowRoot=0)
 ZabbixConf_Advanced_User: "zabbix"
 # Include additional configuration files
-ZabbixConf_Advanced_Include: "/etc/zabbix/zabbix_agentd.d/*.conf"
+ZabbixConf_Advanced_Include_agentd: "/etc/zabbix/zabbix_agentd.d/*.conf"
+ZabbixConf_Advanced_Include_agent2: | 
+  Include=./zabbix_agent2.d/*.conf
+  Include=./zabbix_agent2.d/plugins.d/*.conf
 
+
+## Agent 2 specific params
+ZabbixConf_Advanced_ControlSocket: "/tmp/agent.sock"
+
+
+####### USER-DEFINED MONITORED PARAMETERS #######
 
 # 0-1. Allow all characters to be passed to user-defined parameters
 # @ and newline (\n) are not allowed
 ZabbixConf_UserParams_UnsafeUserParameters: "0"
 # Directory to execute UserParameters from (1 entry allowed)
 ZabbixConf_UserParams_UserParameterDir: ""
-# Define additional parameters
-ZabbixConf_UserParams_UserParameter: |
-      UserParameter=release,uname -a
+# Define additional parameters, use a pipe (|) for multiline input, example parameter: UserParameter=release,uname -a
+ZabbixConf_UserParams_UserParameter: ""
 
-# Path to agent modules
-ZabbixConf_Modules_LoadModulePath: "${libdir}/modules"
+
+####### TLS-RELATED PARAMETERS #######
 
 # unencrypted, psk, cert (1 value). How to connect to server/proxy, used for active checks
 ZabbixConf_Encryption_TLSConnect: "unencrypted"
@@ -95,3 +136,18 @@ ZabbixConf_Encryption_TLSKeyFile: ""
 ZabbixConf_Encryption_TLSPSKIdentity: ""
 # Path to pre-shared key
 ZabbixConf_Encryption_TLSPSKFile: ""
+
+
+####### MODULE-SPECIFIC PARAMETERS #######
+
+## Agent 1 specific params
+# Path to agent modules
+ZabbixConf_Modules_LoadModulePath: "${libdir}/modules"
+
+
+####### PLUGIN-SPECIFIC PARAMETERS #######
+
+## Agent 2 specific params
+
+ZabbixConf_Plugin_Timeout: ""
+ZabbixConf_Plugin_Socket: ""

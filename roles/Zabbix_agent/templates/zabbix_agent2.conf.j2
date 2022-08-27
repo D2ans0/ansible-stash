@@ -1,15 +1,16 @@
 ############ GENERAL PARAMETERS #################
 
-PidFile={{ ZabbixConf_General_PidFile_agentd }}
+PidFile={{ ZabbixConf_General_PidFile_agent2 }}
 LogType={{ ZabbixConf_General_LogType }}
-LogFile={{ ZabbixConf_General_LogFile_agentd }}
+LogFile={{ ZabbixConf_General_LogFile_agent2 }}
 LogFileSize={{ ZabbixConf_General_LogFileSize }}
 DebugLevel={{ ZabbixConf_General_DebugLevel }}
 
 SourceIP={{ ZabbixConf_General_SourceIP }}
 AllowKey={{ ZabbixConf_General_AllowKey }}
 DenyKey={{ ZabbixConf_General_DenyKey }}
-LogRemoteCommands={{ ZabbixConf_General_LogRemoteCommands }}
+Plugins.SystemRun.LogRemoteCommands={{ ZabbixConf_General_LogRemoteCommands }}
+ForceActiveChecksOnStart={{ ZabbixConf_General_ForceActiveChecksOnStart }}
 
 
 ##### Passive checks related
@@ -17,7 +18,7 @@ LogRemoteCommands={{ ZabbixConf_General_LogRemoteCommands }}
 Server={{ ZabbixConf_Passive_Server }}
 ListenPort={{ ZabbixConf_Passive_ListenPort }}
 ListenIP={{ ZabbixConf_Passive_ListenIP }}
-StartAgents={{ ZabbixConf_Passive_StartAgents }}
+StatusPort={{ ZabbixConf_Passive_StatusPort }}
 
 
 ##### Active checks related
@@ -26,26 +27,31 @@ ServerActive={{ ZabbixConf_Active_ServerActive }}
 HostnameItem={{ ZabbixConf_Active_HostnameItem }}
 HostMetadata={{ ZabbixConf_Active_HostMetadata }}
 HostMetadataItem={{ ZabbixConf_Active_HostMetadataItem }}
-HostInterfaceItem={{ ZabbixConf_Active_HostInterfaceItem }}
 RefreshActiveChecks={{ ZabbixConf_Active_RefreshActiveChecks }}
 BufferSend={{ ZabbixConf_Active_BufferSend }}
 BufferSize={{ ZabbixConf_Active_BufferSize }}
-MaxLinesPerSecond={{ ZabbixConf_Active_MaxLinesPerSecond }}
 HeartbeatFrequency={{ ZabbixConf_Active_HeartbeatFrequency }}
+Plugins.Log.MaxLinesPerSecond={{ ZabbixConf_Active_MaxLinesPerSecond }}
+
+EnablePersistentBuffer={{ ZabbixConf_Active_EnablePersistentBuffer }}
+PersistentBufferPeriod={{ ZabbixConf_Active_PersistentBufferPeriod }}
+PersistentBufferFile={{ ZabbixConf_Active_PersistentBufferFile }}
 
 
 ############ ADVANCED PARAMETERS #################
 
 Timeout={{ ZabbixConf_Advanced_Timeout }}
-AllowRoot={{ ZabbixConf_Advanced_AllowRoot }}
-User={{ ZabbixConf_Advanced_User }}
-Include={{ ZabbixConf_Advanced_Include_agentd }}
+# Includes
+{{ ZabbixConf_Advanced_Include_agent2 }}
+
+ControlSocket={{ ZabbixConf_Advanced_ControlSocket }}
 
 
 ####### USER-DEFINED MONITORED PARAMETERS #######
 
 UnsafeUserParameters={{ ZabbixConf_UserParams_UnsafeUserParameters }}
 UserParameterDir={{ ZabbixConf_UserParams_UserParameterDir }}
+# UserParams
 {{ ZabbixConf_UserParams_UserParameter }}
 
 
@@ -63,6 +69,7 @@ TLSPSKIdentity={{ ZabbixConf_Encryption_TLSPSKIdentity }}
 TLSPSKFile={{ ZabbixConf_Encryption_TLSPSKFile }}
 
 
-####### MODULE-SPECIFIC PARAMETERS #######
+####### PLUGIN-SPECIFIC PARAMETERS #######
 
-LoadModulePath={{ ZabbixConf_Modules_LoadModulePath }}
+PluginTimeout={{ ZabbixConf_Plugin_Timeout }}
+PluginSocket={{ ZabbixConf_Plugin_Socket }}

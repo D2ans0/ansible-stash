@@ -1,7 +1,16 @@
 ---
 - hosts: zabbix_agent
 
+
   tasks:
+    - ansible.builtin.package:
+        name: {{ item }} 
+        state: absent
+      with_items:
+      - "zabbix_agent"
+      - "zabbix_agent2"
+      when: Zabbix_Reinstall
+
     - name:
       include_role:
         name: "Zabbix_agent"
